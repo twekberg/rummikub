@@ -42,6 +42,20 @@ def now():
     return datetime.now(tz=pytz.timezone(os.environ['TZ']))
 
 
+def pretty(thing):
+    if isinstance(thing, str):
+        # 1234567890123456789
+        # 2026-02-05 09:16:14.009746
+        return thing[:19]
+    return thing
+
+
+def to_datetime(thing):
+    # 12345678901234567890123456
+    # 2026-02-05 09:16:14.009746
+    return datetime.strptime(thing[:26], '%Y-%m-%d %H:%M:%S.%f')
+    
+
 class Rummikub():
     def __init__(self, database):
         self.database = database
@@ -69,8 +83,12 @@ class Rummikub():
                                       'timestamp': now()})
     def show_stats(self):
         rows = self.database.select(['start_time', 'end_time', 'my_win'], 'stats', 'TRUE')
-        print(rows)
-
+        keys = ['start_time', 'end_time', 'my_win']
+        print('\t\t'.join(keys))
+        for row in rows:
+            print('\t'.join([str(pretty(row[key])) for key in keys]),
+                  end='\t')
+            print(to_datetime(row['end_time']) - to_datetime(row['start_time']))
 
 
 def main(args):
