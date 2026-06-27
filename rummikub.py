@@ -66,6 +66,9 @@ class Rummikub():
             sys.stdout.write('Press <ENTER> when starting the game... ')
             sys.stdout.flush()
             ans = sys.stdin.readline().strip().lower()
+            if ans == '?':
+                self.show_stats(True)
+                continue
             if ans:
                 break
             start_time = now()
@@ -81,19 +84,22 @@ class Rummikub():
                                       'end_time': end_time,
                                       'my_win': my_win,
                                       'timestamp': now()})
-    def show_stats(self):
+    def show_stats(self, summary_only=None):
         rows = self.database.select(['start_time', 'end_time', 'my_win'], 'stats', 'TRUE')
         keys = ['start_time', 'end_time', 'my_win']
-        print('\t\t'.join(keys) + '\tduration')
+        if not summary_only:
+            print('\t\t'.join(keys) + '\tduration')
         my_wins = comp_wins = 0
         shortest_game = timedelta(days=10)
         longest_game = timedelta(days=0)
         total_game = timedelta(days=0)
         for row in rows:
-            print('\t'.join([str(pretty(row[key])) for key in keys]),
-                  end='\t')
+            if not summary_only:
+                print('\t'.join([str(pretty(row[key])) for key in keys]),
+                      end='\t')
             duration = to_datetime(row['end_time']) - to_datetime(row['start_time'])
-            print(str(duration)[2:])
+            if not summary_only:
+                print(str(duration)[2:])
             if row['my_win']:
                 my_wins += 1
             else:
@@ -103,7 +109,7 @@ class Rummikub():
             if duration > longest_game:
                 longest_game = duration
             total_game += duration
-        print(f'My wins: {my_wins}, computer wins: {comp_wins}')
+        print(f'N games: {len(rows)}, my wins: {my_wins}, computer wins: {comp_wins}')
         # No need to show hours since no game lasts that long (always 0).
         print('Shortest:', str(shortest_game)[2:] + ',', ' longest:', str(longest_game)[2:], end='')
         average_seconds = total_game.total_seconds() / len(rows)
